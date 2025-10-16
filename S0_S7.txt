@@ -1,0 +1,133 @@
+MODULE main
+
+VAR
+    -- Posições dos blocos
+    pos_a: 0..7;
+    pos_b: 0..7;
+    pos_c: 0..7;
+    pos_d: 0..7;
+
+    -- Apoios dos blocos
+    on_a: {table, a, b, c, d};
+    on_b: {table, a, b, c, d};
+    on_c: {table, a, b, c, d};
+    on_d: {table, a, b, c, d};
+
+DEFINE
+    -- Tamanhos dos blocos
+    size_a := 1;
+    size_b := 1;
+    size_c := 2;
+    size_d := 3;
+
+    -- Verifica se há sobreposição
+    overlap(p1, s1, p2, s2) := (p1 <= p2 + s2 - 1) & (p2 <= p1 + s1 - 1);
+
+    -- Verifica se o bloco está livre (nada sobre ele)
+    is_clear_a := on_b != a & on_c != a & on_d != a;
+    is_clear_b := on_a != b & on_c != b & on_d != b;
+    is_clear_c := on_a != c & on_b != c & on_d != c;
+    is_clear_d := on_a != d & on_b != d & on_c != d;
+
+INIT
+    -- Estado inicial coerente
+    on_a = table & pos_a = 3 &
+    on_b = table & pos_b = 5 &
+    on_c = table & pos_c = 0 &
+    on_d = table & pos_d = 3;
+
+TRANS
+    -- Movimento de A
+    (
+        is_clear_a &
+        (
+            next(on_a) = table &
+            !overlap(next(pos_a), size_a, pos_b, size_b) &
+            !overlap(next(pos_a), size_a, pos_c, size_c) &
+            !overlap(next(pos_a), size_a, pos_d, size_d)
+        |
+            is_clear_b & next(on_a) = b & next(pos_a) = pos_b
+        |
+            is_clear_c & next(on_a) = c & next(pos_a) = pos_c
+        |
+            is_clear_d & next(on_a) = d & next(pos_a) = pos_d
+        )
+        &
+        next(pos_b) = pos_b & next(on_b) = on_b &
+        next(pos_c) = pos_c & next(on_c) = on_c &
+        next(pos_d) = pos_d & next(on_d) = on_d
+    )
+
+|
+    -- Movimento de B
+    (
+        is_clear_b &
+        (
+            next(on_b) = table &
+            !overlap(next(pos_b), size_b, pos_a, size_a) &
+            !overlap(next(pos_b), size_b, pos_c, size_c) &
+            !overlap(next(pos_b), size_b, pos_d, size_d)
+        |
+            is_clear_a & next(on_b) = a & next(pos_b) = pos_a
+        |
+            is_clear_c & next(on_b) = c & next(pos_b) = pos_c
+        |
+            is_clear_d & next(on_b) = d & next(pos_b) = pos_d
+        )
+        &
+        next(pos_a) = pos_a & next(on_a) = on_a &
+        next(pos_c) = pos_c & next(on_c) = on_c &
+        next(pos_d) = pos_d & next(on_d) = on_d
+    )
+
+|
+    -- Movimento de C
+    (
+        is_clear_c &
+        (
+            next(on_c) = table &
+            !overlap(next(pos_c), size_c, pos_a, size_a) &
+            !overlap(next(pos_c), size_c, pos_b, size_b) &
+            !overlap(next(pos_c), size_c, pos_d, size_d)
+        |
+            is_clear_a & next(on_c) = a & next(pos_c) = pos_a
+        |
+            is_clear_b & next(on_c) = b & next(pos_c) = pos_b
+        |
+            is_clear_d & next(on_c) = d & next(pos_c) = pos_d
+        )
+        &
+        next(pos_a) = pos_a & next(on_a) = on_a &
+        next(pos_b) = pos_b & next(on_b) = on_b &
+        next(pos_d) = pos_d & next(on_d) = on_d
+    )
+
+|
+    -- Movimento de D
+    (
+        is_clear_d &
+        (
+            next(on_d) = table &
+            !overlap(next(pos_d), size_d, pos_a, size_a) &
+            !overlap(next(pos_d), size_d, pos_b, size_b) &
+            !overlap(next(pos_d), size_d, pos_c, size_c)
+        |
+            is_clear_a & next(on_d) = a & next(pos_d) = pos_a
+        |
+            is_clear_b & next(on_d) = b & next(pos_d) = pos_b
+        |
+            is_clear_c & next(on_d) = c & next(pos_d) = pos_c
+        )
+        &
+        next(pos_a) = pos_a & next(on_a) = on_a &
+        next(pos_b) = pos_b & next(on_b) = on_b &
+        next(pos_c) = pos_c & next(on_c) = on_c
+    );
+
+-- Objetivo corrigido: torre a sobre b sobre c, todos alinhados na posição 0, d na mesa na posição 3
+DEFINE
+    GOAL := on_a = b & on_b = c & on_c = table & pos_c = 0 &
+            on_d = table & pos_d = 3;
+
+-- Especificação: é possível atingir o GOAL
+SPEC EF(GOAL)
