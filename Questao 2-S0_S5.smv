@@ -1,0 +1,83 @@
+MODULE main
+
+VAR
+    -- Apoios dos blocos
+    on_a: {table, b, c, d};
+    on_b: {table, a, c, d};
+    on_c: {table, a, b, d};
+    on_d: {table, a, b, c};
+
+DEFINE
+    -- Blocos livres (nada em cima)
+    clear_a := (on_b != a) & (on_c != a) & (on_d != a);
+    clear_b := (on_a != b) & (on_c != b) & (on_d != b);
+    clear_c := (on_a != c) & (on_b != c) & (on_d != c);
+    clear_d := (on_a != d) & (on_b != d) & (on_c != d);
+    
+    -- Estado objetivo
+    GOAL := (on_a = b) & (on_b = c) & (on_c = d) & (on_d = table);
+
+ASSIGN
+    init(on_a) := table;
+    init(on_b) := table;
+    init(on_c) := table;
+    init(on_d) := table;
+
+TRANS
+    -- MOVIMENTO DE A
+    (
+        clear_a &
+        (
+            (next(on_a) = table) |
+            (clear_b & next(on_a) = b) |
+            (clear_c & next(on_a) = c) |
+            (clear_d & next(on_a) = d)
+        ) &
+        (next(on_b) = on_b) &
+        (next(on_c) = on_c) &
+        (next(on_d) = on_d)
+    )
+|
+    -- MOVIMENTO DE B
+    (
+        clear_b &
+        (
+            (next(on_b) = table) |
+            (clear_a & size_b <= size_a & next(on_b) = a) |
+            (clear_c & next(on_b) = c) |
+            (clear_d & next(on_b) = d)
+        ) &
+        (next(on_a) = on_a) &
+        (next(on_c) = on_c) &
+        (next(on_d) = on_d)
+    )
+|
+    -- MOVIMENTO DE C
+    (
+        clear_c &
+        (
+            (next(on_c) = table) |
+            (clear_d & next(on_c) = d)
+        ) &
+        (next(on_a) = on_a) &
+        (next(on_b) = on_b) &
+        (next(on_d) = on_d)
+    )
+|
+    -- MOVIMENTO DE D
+    (
+        clear_d &
+        (next(on_d) = table) &
+        (next(on_a) = on_a) &
+        (next(on_b) = on_b) &
+        (next(on_c) = on_c)
+    );
+
+DEFINE
+    size_a := 1;
+    size_b := 1;
+    size_c := 2;
+    size_d := 3;
+
+-- Para gerar contraexemplo mostrando caminho para o GOAL
+CTLSPEC AG(!GOAL)
